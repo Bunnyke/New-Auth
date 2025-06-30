@@ -6,7 +6,7 @@ import html
 
 # === CONFIGURATION ===
 BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Your Telegram bot token here!
-PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"  # <-- Your proxy string
+PROXY = None  # <--- No proxy (all requests use your VPS/server IP)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
@@ -38,10 +38,11 @@ def format_stripe_ui(card, gateway, status, response, bank, country, info, bin_c
 def bin_lookup(bin_number):
     try:
         session = requests.Session()
-        session.proxies.update({
-            "http": PROXY,
-            "https": PROXY
-        })
+        if PROXY:
+            session.proxies.update({
+                "http": PROXY,
+                "https": PROXY
+            })
         r = session.get(f"https://api.voidex.dev/api/bin?bin={bin_number}", timeout=10)
         data = r.json()
         return {
@@ -74,10 +75,11 @@ def process_card(card_input):
 
     try:
         session = requests.Session()
-        session.proxies.update({
-            "http": PROXY,
-            "https": PROXY
-        })
+        if PROXY:
+            session.proxies.update({
+                "http": PROXY,
+                "https": PROXY
+            })
 
         random_user_url = "https://randomuser.me/api/?results=1&nat=US"
         random_user_response = session.get(random_user_url)

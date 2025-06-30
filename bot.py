@@ -3,8 +3,10 @@ import requests
 from bs4 import BeautifulSoup
 from aiogram import Bot, Dispatcher, types, executor
 
-# === Telegram Bot Config ===
-BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- PUT YOUR TELEGRAM BOT TOKEN HERE
+# === CONFIGURATION ===
+BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Put your bot token here
+PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"  # <-- Put your proxy string here
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
@@ -30,7 +32,12 @@ def format_stripe_ui(card, gateway, status, response, bank, country, info, bin_c
 
 def bin_lookup(bin_number):
     try:
-        r = requests.get(f"https://api.voidex.dev/api/bin?bin={bin_number}", timeout=10)
+        session = requests.Session()
+        session.proxies.update({
+            "http": PROXY,
+            "https": PROXY
+        })
+        r = session.get(f"https://api.voidex.dev/api/bin?bin={bin_number}", timeout=10)
         data = r.json()
         return {
             'bank': data.get("bank", "N/A"),
@@ -44,7 +51,7 @@ def bin_lookup(bin_number):
             'info': 'N/A'
         }
 
-def process_card(card_input, use_proxy=False):
+def process_card(card_input):
     try:
         cc, mes, ano, cvv = card_input.split("|")
         if len(cc) < 13 or len(cc) > 19 or not cc.isdigit():
@@ -61,8 +68,13 @@ def process_card(card_input, use_proxy=False):
         return {"status": "INVALID", "response": "Card format invalid."}
 
     try:
-        random_user_url = "https://randomuser.me/api/?results=1&nat=US"
         session = requests.Session()
+        session.proxies.update({
+            "http": PROXY,
+            "https": PROXY
+        })
+
+        random_user_url = "https://randomuser.me/api/?results=1&nat=US"
         random_user_response = session.get(random_user_url)
         user_info = random_user_response.json()["results"][0]
         email = user_info["email"]
@@ -149,7 +161,6 @@ def process_card(card_input, use_proxy=False):
         # Return exact site response as requested
         if response_json.get("success") is False:
             error_message = response_json.get("data", {}).get("error", {}).get("message", "Unknown error")
-            # Map some common keywords for better clarity, but always show the site message
             lower_error = error_message.lower()
             if "insufficient_funds" in lower_error:
                 return {"status": "INSUFFICIENT FUNDS ❗", "response": error_message}
@@ -163,7 +174,6 @@ def process_card(card_input, use_proxy=False):
         elif response_json.get("success") is True:
             data = response_json.get("data", {})
             status = data.get("status", "unknown")
-            # If 3D secure or authentication required, show that too
             if status == "requires_action":
                 return {"status": "3D SECURE REQUIRED 🔐", "response": status}
             else:

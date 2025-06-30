@@ -2,13 +2,17 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from aiogram import Bot, Dispatcher, types, executor
+import html
 
 # === CONFIGURATION ===
-BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Put your bot token here
-PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"
+BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Put your Telegram bot token here!
+PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"  # <-- Your SOCKS5 proxy here
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
+
+def escape_html(text):
+    return html.escape(str(text))
 
 def format_stripe_ui(card, gateway, status, response, bank, country, info, bin_code, elapsed, checked_by):
     return (
@@ -217,16 +221,16 @@ async def check_cmd(message: types.Message):
     bin_data = bin_lookup(bin_number)
     elapsed = "%.2fs" % (time.time() - t0)
     ui = format_stripe_ui(
-        card=card,
-        gateway="Stripe Auth",
-        status=status,
-        response=resp,
-        bank=bin_data['bank'],
-        country=bin_data['country'],
-        info=bin_data['info'],
-        bin_code=bin_number,
-        elapsed=elapsed,
-        checked_by=message.from_user.first_name
+        card=escape_html(card),
+        gateway=escape_html("Stripe Auth"),
+        status=escape_html(status),
+        response=escape_html(resp),
+        bank=escape_html(bin_data['bank']),
+        country=escape_html(bin_data['country']),
+        info=escape_html(bin_data['info']),
+        bin_code=escape_html(bin_number),
+        elapsed=escape_html(elapsed),
+        checked_by=escape_html(message.from_user.first_name)
     )
     await message.reply(ui, parse_mode="HTML")
 
@@ -250,16 +254,16 @@ async def card_msg(message: types.Message):
     bin_data = bin_lookup(bin_number)
     elapsed = "%.2fs" % (time.time() - t0)
     ui = format_stripe_ui(
-        card=card,
-        gateway="Stripe Auth",
-        status=status,
-        response=resp,
-        bank=bin_data['bank'],
-        country=bin_data['country'],
-        info=bin_data['info'],
-        bin_code=bin_number,
-        elapsed=elapsed,
-        checked_by=message.from_user.first_name
+        card=escape_html(card),
+        gateway=escape_html("Stripe Auth"),
+        status=escape_html(status),
+        response=escape_html(resp),
+        bank=escape_html(bin_data['bank']),
+        country=escape_html(bin_data['country']),
+        info=escape_html(bin_data['info']),
+        bin_code=escape_html(bin_number),
+        elapsed=escape_html(elapsed),
+        checked_by=escape_html(message.from_user.first_name)
     )
     await message.reply(ui, parse_mode="HTML")
 

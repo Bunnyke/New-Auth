@@ -5,31 +5,32 @@ from aiogram import Bot, Dispatcher, types, executor
 import html
 
 # === CONFIGURATION ===
-BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Put your Telegram bot token here!
-PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"  # <-- Your SOCKS5 proxy here
+BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Your Telegram bot token here!
+PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"  # <-- Your proxy string
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
 def escape_html(text):
-    return html.escape(str(text))
+    """Escapes HTML special characters for Telegram."""
+    return html.escape(str(text), quote=False)
 
 def format_stripe_ui(card, gateway, status, response, bank, country, info, bin_code, elapsed, checked_by):
     return (
         "🔍 <b>STRIPE AUTH</b>\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        f"💳 <b>Card:</b> <code>{card}</code>\n"
-        f"🚪 <b>Gateway:</b> {gateway}\n"
-        f"🕵️ <b>Status:</b> {status}\n"
-        f"💬 <b>Response:</b> {response}\n"
+        f"💳 <b>Card:</b> <code>{escape_html(card)}</code>\n"
+        f"🚪 <b>Gateway:</b> {escape_html(gateway)}\n"
+        f"🕵️ <b>Status:</b> {escape_html(status)}\n"
+        f"💬 <b>Response:</b> {escape_html(response)}\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🏦 <b>Bank:</b> {bank}\n"
-        f"🌍 <b>Country:</b> {country}\n"
-        f"💡 <b>Info:</b> {info}\n"
+        f"🏦 <b>Bank:</b> {escape_html(bank)}\n"
+        f"🌍 <b>Country:</b> {escape_html(country)}\n"
+        f"💡 <b>Info:</b> {escape_html(info)}\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        f"🆔 <b>BIN:</b> {bin_code}\n"
-        f"⏱️ <b>Time:</b> {elapsed} 💨\n"
-        f"👤 <b>Checked By:</b> {checked_by}\n"
+        f"🆔 <b>BIN:</b> {escape_html(bin_code)}\n"
+        f"⏱️ <b>Time:</b> {escape_html(elapsed)} 💨\n"
+        f"👤 <b>Checked By:</b> {escape_html(checked_by)}\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "👨‍💻 <b>Dev:</b> 👾 𝗕𝗨𝗡𝗡𝗬 🚀"
     )
@@ -221,16 +222,16 @@ async def check_cmd(message: types.Message):
     bin_data = bin_lookup(bin_number)
     elapsed = "%.2fs" % (time.time() - t0)
     ui = format_stripe_ui(
-        card=escape_html(card),
-        gateway=escape_html("Stripe Auth"),
-        status=escape_html(status),
-        response=escape_html(resp),
-        bank=escape_html(bin_data['bank']),
-        country=escape_html(bin_data['country']),
-        info=escape_html(bin_data['info']),
-        bin_code=escape_html(bin_number),
-        elapsed=escape_html(elapsed),
-        checked_by=escape_html(message.from_user.first_name)
+        card=card,
+        gateway="Stripe Auth",
+        status=status,
+        response=resp,
+        bank=bin_data['bank'],
+        country=bin_data['country'],
+        info=bin_data['info'],
+        bin_code=bin_number,
+        elapsed=elapsed,
+        checked_by=message.from_user.first_name
     )
     await message.reply(ui, parse_mode="HTML")
 
@@ -254,16 +255,16 @@ async def card_msg(message: types.Message):
     bin_data = bin_lookup(bin_number)
     elapsed = "%.2fs" % (time.time() - t0)
     ui = format_stripe_ui(
-        card=escape_html(card),
-        gateway=escape_html("Stripe Auth"),
-        status=escape_html(status),
-        response=escape_html(resp),
-        bank=escape_html(bin_data['bank']),
-        country=escape_html(bin_data['country']),
-        info=escape_html(bin_data['info']),
-        bin_code=escape_html(bin_number),
-        elapsed=escape_html(elapsed),
-        checked_by=escape_html(message.from_user.first_name)
+        card=card,
+        gateway="Stripe Auth",
+        status=status,
+        response=resp,
+        bank=bin_data['bank'],
+        country=bin_data['country'],
+        info=bin_data['info'],
+        bin_code=bin_number,
+        elapsed=elapsed,
+        checked_by=message.from_user.first_name
     )
     await message.reply(ui, parse_mode="HTML")
 

@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, types, executor
 
 # === CONFIGURATION ===
 BOT_TOKEN = '7390503914:AAFNopMlX6iNHO2HTWNYpLLzE_DfF8h4uQ4'   # <-- Put your bot token here
-PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"  # <-- Put your proxy string here
+PROXY = "socks5://PP_D4F1YGPKC1-country-US-state-Newyork-session-tMJaETm8HSRJ:omf4xz27@evo-pro.porterproxies.com:61236/"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
@@ -158,7 +158,6 @@ def process_card(card_input):
         except Exception:
             return {"status": "DECLINED ❌", "response": "Stripe confirm setup error."}
 
-        # Return exact site response as requested
         if response_json.get("success") is False:
             error_message = response_json.get("data", {}).get("error", {}).get("message", "Unknown error")
             lower_error = error_message.lower()
@@ -189,12 +188,50 @@ async def start_cmd(message: types.Message):
         "Welcome!\n"
         "Send a card in this format:\n"
         "<code>5357781234560000|01|25|123</code>\n"
+        "Or use /check <card> to check.\n"
         "The bot will reply with Stripe Auth status, BIN lookup, and details.",
         parse_mode="HTML"
     )
 
+@dp.message_handler(commands=["check"])
+async def check_cmd(message: types.Message):
+    args = message.get_args().strip()
+    if "|" not in args:
+        await message.reply("Send a card in this format: 5357781234560000|01|25|123")
+        return
+    card = args
+    try:
+        parts = card.split("|")
+        if len(parts) != 4 or not all(parts):
+            raise ValueError
+        bin_number = parts[0][:6]
+    except Exception:
+        await message.reply("Invalid card format!\nFormat: <code>5357781234560000|01|25|123</code>", parse_mode="HTML")
+        return
+
+    t0 = time.time()
+    result = process_card(card)
+    status = result.get("status", "DECLINED ❌")
+    resp = result.get("response", "Unknown.")
+
+    bin_data = bin_lookup(bin_number)
+    elapsed = "%.2fs" % (time.time() - t0)
+    ui = format_stripe_ui(
+        card=card,
+        gateway="Stripe Auth",
+        status=status,
+        response=resp,
+        bank=bin_data['bank'],
+        country=bin_data['country'],
+        info=bin_data['info'],
+        bin_code=bin_number,
+        elapsed=elapsed,
+        checked_by=message.from_user.first_name
+    )
+    await message.reply(ui, parse_mode="HTML")
+
 @dp.message_handler(lambda m: "|" in m.text)
-async def check_card(message: types.Message):
+async def card_msg(message: types.Message):
     card = message.text.strip().replace(" ", "")
     try:
         parts = card.split("|")
@@ -206,12 +243,10 @@ async def check_card(message: types.Message):
         return
 
     t0 = time.time()
-    # Stripe gateway/process
     result = process_card(card)
     status = result.get("status", "DECLINED ❌")
     resp = result.get("response", "Unknown.")
 
-    # BIN Lookup
     bin_data = bin_lookup(bin_number)
     elapsed = "%.2fs" % (time.time() - t0)
     ui = format_stripe_ui(
